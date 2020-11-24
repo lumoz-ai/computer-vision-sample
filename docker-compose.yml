@@ -1,0 +1,57 @@
+---
+version: '3.7'
+networks:
+  ALPR_NEW-2:
+    ipam:
+      driver: default
+services:
+  g_rpc_image_input_brick:
+    networks:
+    - ALPR_NEW-2
+    image: lumoz/sample-input-brick
+    expose:
+    - '50051'
+    environment:
+      graph_configuration: '{"g_rpc_image_input_brick":{"grpc":{"host":"g_rpc_image_input_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":3,"outputProtoId":3,"backEndUrl":"http://192.168.1.3:5000/accounts/{}/solution_instances/shoppingewq22w132/detections"},"meta":{"accountId":"e416c5e2-f947-47aa-9b96-b35086a36ee5","camera":"camera_1","site":"site_1","inputBrickNames":"[\"alpr_input_brick\"]","outputBrickNames":"[\"ocr_brick\"]"},"protoStoreConfiguration":{"storeLocation":"protos"}},"yolo_car_detector_brick":{"grpc":{"host":"yolo_car_detector_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":3,"outputProtoId":3},"protoStoreConfiguration":{"storeLocation":"protos"},"detection":{"modelFileLocation":"model/yolov3.onnx"}},"detection_to_image_proto_caster_brick":{"grpc":{"host":"detection_to_image_proto_caster_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":5,"outputProtoId":5},"protoStoreConfiguration":{"storeLocation":"protos"}},"license_plate_detector_brick":{"grpc":{"host":"license_plate_detector_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":3,"outputProtoId":3},"protoStoreConfiguration":{"storeLocation":"protos"},"detection":{"modelFileLocation":"model/wpod.onnx"}},"detection_to_image_proto_caster_brick_2":{"grpc":{"host":"detection_to_image_proto_caster_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":5,"outputProtoId":5},"protoStoreConfiguration":{"storeLocation":"protos"}},"ocr_brick":{"grpc":{"host":"ocr_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":4,"outputProtoId":4},"protoStoreConfiguration":{"storeLocation":"protos"},"detection":{"modelFileLocation":"model/ocr_net.onnx","metaPath":"model/ocr-net.meta"}}}'
+      graph: '{"g_rpc_image_input_brick":["yolo_car_detector_brick"],"yolo_car_detector_brick":["detection_to_image_proto_caster_brick"],"detection_to_image_proto_caster_brick":["license_plate_detector_brick"],"license_plate_detector_brick":["detection_to_image_proto_caster_brick_2"],"detection_to_image_proto_caster_brick_2":["ocr_brick"]}'
+      input_brick_names: '["g_rpc_image_input_brick"]'
+      output_brick_names: '["ocr_brick"]'
+      meta_store_api: http://18.222.130.163:3000/v1/artefacts
+    ports:
+    - 50052:50051
+  yolo_car_detector_brick:
+    networks:
+    - ALPR_NEW-2
+    image: lumoz/yolo-detector-brick
+    expose:
+    - '50051'
+    environment:
+      meta_store_api: http://18.222.130.163:3000/v1/artefacts
+      configuration: '{"grpc":{"host":"yolo_car_detector_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":3,"outputProtoId":3},"protoStoreConfiguration":{"storeLocation":"protos"},"detection":{"modelFileLocation":"model/yolov3.onnx"}}'
+  detection_to_image_proto_caster_brick:
+    networks:
+    - ALPR_NEW-2
+    image: lumoz/detection-image-caster-brick
+    expose:
+    - '50051'
+    environment:
+      meta_store_api: http://18.222.130.163:3000/v1/artefacts
+      configuration: '{"grpc":{"host":"detection_to_image_proto_caster_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":5,"outputProtoId":5},"protoStoreConfiguration":{"storeLocation":"protos"}}'
+  license_plate_detector_brick:
+    networks:
+    - ALPR_NEW-2
+    image: lumoz/license-plate-detector-brick
+    expose:
+    - '50051'
+    environment:
+      meta_store_api: http://18.222.130.163:3000/v1/artefacts
+      configuration: '{"grpc":{"host":"license_plate_detector_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":3,"outputProtoId":3},"protoStoreConfiguration":{"storeLocation":"protos"},"detection":{"modelFileLocation":"model/wpod.onnx"}}'
+  ocr_brick:
+    networks:
+    - ALPR_NEW-2
+    image: lumoz/ocr-brick
+    expose:
+    - '50051'
+    environment:
+      meta_store_api: http://18.222.130.163:3000/v1/artefacts
+      configuration: '{"grpc":{"host":"ocr_brick","port":50051},"brick":{"inputConnectorType":1,"outputConnectorType":1,"inputProtoId":4,"outputProtoId":4},"protoStoreConfiguration":{"storeLocation":"protos"},"detection":{"modelFileLocation":"model/ocr_net.onnx","metaPath":"model/ocr-net.meta"}}'
